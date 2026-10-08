@@ -143,7 +143,7 @@ python -m sentinel web --port 8765
 python -m unittest discover -s tests -v
 ```
 
-See [DEMO.md](DEMO.md) for an end-to-end walkthrough and [REPORT.md](REPORT.md) for requirement coverage, architecture, evaluation methodology and limitations.
+See [DEMO.md](DEMO.md) for an end-to-end walkthrough, [REPORT.md](REPORT.md) for the editable report source, and [REPORT.pdf](REPORT.pdf) for the submission-ready PDF.
 
 ## Limitations
 
