@@ -1,0 +1,25 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "cyber-sentinel"
+version = "1.0.0"
+description = "A defensive, evidence-first telemetry anomaly and threat sentinel"
+requires-python = ">=3.11"
+dependencies = []
+
+[project.scripts]
+cyber-sentinel = "sentinel.cli:main"
+
+[tool.setuptools]
+packages = ["sentinel"]
+
+[tool.setuptools.package-data]
+sentinel = [
+    "dashboard.html",
+    "resources/*.json",
+    "resources/*.jsonl",
+    "resources/*.csv",
+    "resources/scenarios/*.jsonl",
+]

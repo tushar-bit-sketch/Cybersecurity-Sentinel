@@ -1,0 +1,740 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="dark">
+  <title>Cyber Sentinel | Network Operations</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      --base: #101516;
+      --panel: #171e1e;
+      --panel-2: #1d2625;
+      --line: #33413e;
+      --muted: #91a29a;
+      --text: #e8eee7;
+      --lime: #c5ef62;
+      --cyan: #62d6c7;
+      --amber: #f5ba58;
+      --red: #f27869;
+      --blue: #8aaed0;
+      --mono: "Cascadia Code", "SFMono-Regular", Consolas, monospace;
+      --sans: "Segoe UI", "Aptos", system-ui, sans-serif;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-width: 320px;
+      color: var(--text);
+      background: var(--base);
+      font: 14px/1.45 var(--sans);
+    }
+    button, select, input { font: inherit; }
+    button { cursor: pointer; }
+    button:focus-visible, select:focus-visible, input:focus-visible, [tabindex]:focus-visible {
+      outline: 2px solid var(--lime); outline-offset: 2px;
+    }
+    .topbar {
+      min-height: 66px; display: flex; align-items: center; justify-content: space-between;
+      padding: 0 28px; border-bottom: 1px solid var(--line); background: #141a19;
+    }
+    .brand { display: flex; align-items: center; gap: 13px; letter-spacing: .07em; }
+    .brand-mark {
+      width: 32px; height: 32px; display: grid; place-items: center;
+      color: var(--base); background: var(--lime); font: 800 17px var(--mono);
+      clip-path: polygon(0 0, 100% 0, 100% 72%, 72% 100%, 0 100%);
+    }
+    .brand-name { font-size: 14px; font-weight: 750; }
+    .brand-sub { color: var(--muted); font: 10px var(--mono); letter-spacing: .12em; margin-top: 2px; }
+    .top-meta { display: flex; align-items: center; gap: 22px; color: var(--muted); font: 11px var(--mono); }
+    .live-tag { display: flex; align-items: center; gap: 8px; color: var(--lime); letter-spacing: .1em; }
+    .live-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--lime); box-shadow: 0 0 10px #c5ef6280; }
+    main { max-width: 1440px; margin: auto; padding: 27px 28px 50px; }
+    .eyebrow { color: var(--lime); font: 10px var(--mono); letter-spacing: .16em; text-transform: uppercase; }
+    .heading { display: flex; justify-content: space-between; align-items: end; gap: 20px; margin-bottom: 22px; }
+    h1 { margin: 5px 0 0; font-size: clamp(22px, 3vw, 30px); line-height: 1.2; font-weight: 650; letter-spacing: -.025em; }
+    .heading-note { margin-top: 6px; color: var(--muted); font-size: 12px; }
+    .utc-clock { color: var(--muted); font: 11px var(--mono); white-space: nowrap; }
+    .scan-strip {
+      display: grid; grid-template-columns: minmax(180px, 1.2fr) minmax(200px, 2fr) auto;
+      gap: 12px; align-items: center; padding: 14px; border: 1px solid var(--line);
+      background: var(--panel); margin-bottom: 14px;
+    }
+    .select-wrap { position: relative; }
+    select, .file-label {
+      height: 40px; width: 100%; padding: 0 12px; border: 1px solid var(--line);
+      border-radius: 2px; background: #111817; color: var(--text);
+    }
+    .file-label {
+      display: flex; align-items: center; justify-content: space-between; gap: 8px;
+      color: var(--muted); cursor: pointer; font-size: 12px;
+    }
+    .file-label strong { color: var(--text); font-weight: 550; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    input[type=file] { position: absolute; width: 1px; height: 1px; opacity: 0; }
+    .scan-btn {
+      min-width: 142px; height: 42px; padding: 0 18px; border: 0; border-radius: 2px;
+      color: #12180d; background: var(--lime); font: 750 12px var(--mono);
+      letter-spacing: .08em; text-transform: uppercase;
+    }
+    .scan-btn:hover { background: #d6fb83; }
+    .scan-btn:disabled { opacity: .55; cursor: progress; }
+    .scan-btn.busy { color: var(--lime); background: #28321d; border: 1px solid #657d35; }
+    .drop-note { margin: 0 0 17px; color: var(--muted); font-size: 11px; }
+    .policy-control { display: flex; align-items: center; gap: 10px; margin: -7px 0 13px; color: var(--muted); font: 9px var(--mono); }
+    .policy-control > label:first-child { letter-spacing: .08em; }
+    .policy-control > input[type=number] { width: 86px; height: 27px; border: 1px solid var(--line); background: #111817; color: var(--text); padding: 0 7px; font: 10px var(--mono); }
+    .noise-option { display: flex; align-items: center; gap: 5px; color: var(--text); }
+    .policy-control > span { color: var(--muted); }
+    #metric-policy { font-size: 15px; overflow-wrap: anywhere; }
+    .status-line {
+      min-height: 43px; display: flex; justify-content: space-between; align-items: center; gap: 16px;
+      padding: 0 14px; border: 1px solid var(--line); background: #141a19; margin-bottom: 15px;
+    }
+    .status-copy { display: flex; align-items: center; gap: 10px; color: var(--muted); font-size: 12px; }
+    .status-copy strong { color: var(--text); font-weight: 550; }
+    .status-side { color: var(--muted); font: 10px var(--mono); white-space: nowrap; }
+    .meter { width: 100px; height: 3px; background: #36403c; overflow: hidden; }
+    .meter-fill { height: 100%; width: 0; background: var(--lime); transition: width .25s ease; }
+    .error { display: none; margin: 0 0 14px; padding: 10px 13px; border-left: 3px solid var(--red); background: #2a1c1b; color: #ffc2b7; font-size: 12px; }
+    .error.show { display: block; }
+    .metric-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px; margin-bottom: 10px; }
+    .metric {
+      min-height: 100px; position: relative; padding: 14px 16px; border: 1px solid var(--line); background: var(--panel);
+    }
+    .metric:before { content: ""; position: absolute; left: 0; top: 13px; bottom: 13px; width: 2px; background: var(--metric-color, var(--cyan)); }
+    .metric-label { color: var(--muted); font: 10px var(--mono); letter-spacing: .1em; text-transform: uppercase; }
+    .metric-value { margin-top: 8px; font: 600 27px/1 var(--mono); color: var(--text); }
+    .metric-caption { margin-top: 7px; color: var(--muted); font-size: 10px; }
+    .overview-grid { display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(210px, .8fr) minmax(210px, .8fr); gap: 10px; margin-bottom: 10px; }
+    .panel { border: 1px solid var(--line); background: var(--panel); }
+    .panel-head {
+      min-height: 45px; display: flex; align-items: center; justify-content: space-between; gap: 12px;
+      padding: 0 15px; border-bottom: 1px solid var(--line);
+    }
+    .panel-title { font-size: 12px; font-weight: 600; letter-spacing: .025em; }
+    .panel-kicker { color: var(--muted); font: 9px var(--mono); letter-spacing: .08em; }
+    .chart-area { padding: 13px 15px 10px; height: 201px; }
+    .chart-area svg { width: 100%; height: 100%; overflow: visible; }
+    .chart-grid { stroke: #34403c; stroke-width: 1; stroke-dasharray: 3 5; }
+    .chart-line { fill: none; stroke: var(--lime); stroke-width: 2; vector-effect: non-scaling-stroke; }
+    .chart-point { fill: var(--base); stroke: var(--lime); stroke-width: 2; vector-effect: non-scaling-stroke; }
+    .chart-label { fill: var(--muted); font: 9px var(--mono); }
+    .chart-empty { fill: var(--muted); font: 11px var(--mono); }
+    .dist-wrap { padding: 18px 16px; }
+    .dist-bar { height: 9px; display: flex; background: #303b37; margin: 12px 0 17px; }
+    .dist-segment { height: 100%; transition: width .35s ease; }
+    .dist-legend { display: grid; gap: 10px; }
+    .legend-row { display: grid; grid-template-columns: 9px 1fr auto; align-items: center; gap: 8px; color: var(--muted); font-size: 11px; }
+    .legend-dot { width: 7px; height: 7px; background: var(--dot-color); }
+    .legend-row strong { color: var(--text); font: 12px var(--mono); }
+    .lower-grid { display: grid; grid-template-columns: minmax(0, 1.6fr) minmax(280px, .85fr); gap: 10px; }
+    .event-toolbar { display: flex; align-items: center; gap: 8px; }
+    .search-input, .filter-select {
+      height: 29px; padding: 0 9px; border: 1px solid var(--line); border-radius: 2px;
+      background: #111817; color: var(--text); font-size: 10px;
+    }
+    .search-input { width: min(180px, 25vw); }
+    .filter-select { width: 112px; }
+    .table-scroll { overflow: auto; max-height: 382px; }
+    table { width: 100%; border-collapse: collapse; white-space: nowrap; }
+    th { position: sticky; top: 0; z-index: 1; color: var(--muted); background: #18201f; text-align: left; font: 9px var(--mono); letter-spacing: .08em; }
+    th, td { padding: 10px 12px; border-bottom: 1px solid #2a3431; }
+    td { color: #cbd5cd; font-size: 11px; }
+    tbody tr { cursor: pointer; }
+    tbody tr:hover, tbody tr.selected { background: #232d28; }
+    .risk-value { font: 650 12px var(--mono); }
+    .band { display: inline-block; padding: 3px 6px; border: 1px solid currentColor; font: 9px var(--mono); letter-spacing: .04em; }
+    .normal { color: var(--cyan); }
+    .suspicious { color: var(--amber); }
+    .malicious { color: var(--red); }
+    .class-name { color: var(--text); }
+    .detail-content { padding: 14px 15px; min-height: 210px; }
+    .detail-empty { color: var(--muted); font-size: 11px; line-height: 1.7; }
+    .detail-head { display: flex; justify-content: space-between; align-items: start; gap: 10px; padding-bottom: 12px; border-bottom: 1px solid var(--line); }
+    .detail-ip { color: var(--text); font: 13px var(--mono); }
+    .detail-sub { color: var(--muted); font: 10px var(--mono); margin-top: 5px; }
+    .detail-risk { font: 700 22px var(--mono); }
+    .detail-section { margin-top: 13px; color: var(--muted); font: 9px var(--mono); letter-spacing: .12em; text-transform: uppercase; }
+    .evidence-list { display: grid; gap: 8px; padding: 0; margin: 9px 0 0; list-style: none; }
+    .evidence-list li { border-left: 2px solid var(--cyan); padding: 2px 0 2px 9px; color: #cbd5cd; font-size: 11px; }
+    .feature-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 12px; }
+    .feature { color: var(--muted); font-size: 10px; }
+    .feature strong { display: block; color: var(--text); font: 11px var(--mono); margin-top: 3px; }
+    .history-list { max-height: 265px; overflow: auto; }
+    .history-item { display: grid; grid-template-columns: 42px 1fr auto; align-items: center; gap: 8px; padding: 10px 14px; border-bottom: 1px solid #2a3431; }
+    .history-score { font: 650 13px var(--mono); }
+    .history-main { min-width: 0; }
+    .history-main strong { display: block; color: var(--text); font: 10px var(--mono); overflow: hidden; text-overflow: ellipsis; }
+    .history-main span { display: block; color: var(--muted); font-size: 10px; margin-top: 3px; }
+    .history-empty { padding: 18px 14px; color: var(--muted); font-size: 11px; }
+    .history-item { cursor: pointer; }
+    .history-item:hover { background: #232d28; }
+    .workflow-row { display: flex; align-items: center; gap: 7px; margin-top: 12px; }
+    .workflow-row select, .workflow-row button { height: 30px; border: 1px solid var(--line); background: #111817; color: var(--text); padding: 0 9px; font-size: 10px; }
+    .workflow-row button { color: var(--lime); border-color: #596b38; }
+    details.audit-json { margin-top: 10px; }
+    details.audit-json summary { color: var(--muted); cursor: pointer; font: 9px var(--mono); }
+    details.audit-json pre { max-height: 190px; overflow: auto; white-space: pre-wrap; overflow-wrap: anywhere; color: #c4d0c6; font: 9px/1.45 var(--mono); }
+    .sources-table { width: 100%; }
+    .diagnostics { display: none; max-height: 100px; overflow: auto; padding: 10px 14px; border-top: 1px solid var(--line); color: var(--amber); font: 10px/1.5 var(--mono); white-space: pre-wrap; }
+    .diagnostics.show { display: block; }
+    .footer { margin-top: 16px; display: flex; justify-content: space-between; gap: 12px; color: var(--muted); font: 9px var(--mono); }
+    .footer .local-only { color: var(--lime); }
+    @media (max-width: 900px) {
+      main { padding: 22px 16px 36px; }
+      .topbar { padding: 0 16px; }
+      .overview-grid, .lower-grid { grid-template-columns: 1fr; }
+      .metric-grid { grid-template-columns: repeat(3, 1fr); }
+    }
+    @media (max-width: 600px) {
+      .top-meta .utc-clock { display: none; }
+      .heading { align-items: start; flex-direction: column; }
+      .scan-strip { grid-template-columns: 1fr; }
+      .metric-grid { grid-template-columns: 1fr 1fr; }
+      .status-line { align-items: start; flex-direction: column; padding: 10px 12px; gap: 7px; }
+      .event-toolbar { flex-wrap: wrap; }
+      .panel-head.table-head { align-items: start; flex-direction: column; padding-top: 10px; padding-bottom: 10px; }
+      .search-input { width: 130px; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      *, *:before, *:after { scroll-behavior: auto !important; transition: none !important; animation: none !important; }
+    }
+  </style>
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">
+      <div class="brand-mark" aria-hidden="true">S</div>
+      <div><div class="brand-name">CYBER SENTINEL</div><div class="brand-sub">NETWORK OPERATIONS / 01</div></div>
+    </div>
+    <div class="top-meta">
+      <span class="live-tag"><i class="live-dot"></i><span id="system-state">READY</span></span>
+      <span class="utc-clock" id="clock">--:--:-- UTC</span>
+    </div>
+  </header>
+  <main>
+    <section class="heading">
+      <div>
+        <div class="eyebrow">DEFENSIVE TELEMETRY / ANALYSIS CONSOLE</div>
+        <h1>Threat observability</h1>
+        <div class="heading-note">Evidence-linked analysis from the local Sentinel engine. Nothing leaves this machine.</div>
+      </div>
+      <div class="utc-clock">ENGINE · RANDOM FOREST + ISOLATION FOREST</div>
+    </section>
+    <section class="scan-strip" aria-label="Start telemetry scan">
+      <div class="select-wrap">
+        <select id="source-choice" aria-label="Scan input">
+          <option value="demo">Demo replay · recovery sample</option>
+          <option value="scenario:normal">Scenario · normal</option>
+          <option value="scenario:portscan">Scenario · port scan</option>
+          <option value="scenario:bruteforce">Scenario · brute force</option>
+          <option value="scenario:lateralmovement">Scenario · lateral movement</option>
+          <option value="scenario:dataexfiltration">Scenario · data exfiltration</option>
+          <option value="scenario:beaconing">Scenario · beaconing</option>
+          <option value="scenario:noise">Scenario · benign noise</option>
+          <option value="scenario:hostile">Scenario · hostile / malformed</option>
+          <option value="upload">Upload JSONL telemetry…</option>
+        </select>
+      </div>
+      <label class="file-label" id="file-label" for="file-input">
+        <span>INPUT STREAM</span><strong id="file-name">Bundled synthetic replay</strong>
+      </label>
+      <input id="file-input" type="file" accept=".jsonl,.ndjson,.txt,application/json">
+      <button id="scan-button" class="scan-btn" type="button">▶ &nbsp; Scan telemetry</button>
+    </section>
+    <p class="drop-note">Replay a bundled scenario or upload JSON Lines (maximum 2 MB / 5,000 records). The Scan button runs <code>python -m sentinel scan</code> locally.</p>
+    <div class="policy-control">
+      <label for="max-risk">MAX-RISK GATE</label><input id="max-risk" type="number" min="0" max="100" placeholder="disabled" aria-label="Optional maximum risk exit threshold">
+      <label class="noise-option"><input id="drop-noise" type="checkbox"> Drop tagged background rows</label>
+      <span>Exit 2 when a scored event exceeds the configured risk.</span>
+    </div>
+    <div class="status-line" role="status" aria-live="polite">
+      <div class="status-copy"><i class="live-dot" id="status-dot" style="background:var(--cyan)"></i><strong id="status-title">Standing by</strong><span id="status-detail">Choose a source and launch a scan.</span></div>
+      <div class="status-side"><div class="meter"><div class="meter-fill" id="meter-fill"></div></div></div>
+    </div>
+    <div class="error" id="error-box" role="alert"></div>
+
+    <section class="metric-grid" aria-label="Scan summary">
+      <article class="metric" style="--metric-color:var(--lime)">
+        <div class="metric-label">Total events</div><div class="metric-value" id="metric-assessed">—</div><div class="metric-caption">Accepted and scored</div>
+      </article>
+      <article class="metric" style="--metric-color:var(--cyan)">
+        <div class="metric-label">Normal</div><div class="metric-value" id="metric-normal">—</div><div class="metric-caption">Risk 0–30</div>
+      </article>
+      <article class="metric" style="--metric-color:var(--amber)">
+        <div class="metric-label">Suspicious</div><div class="metric-value" id="metric-suspicious">—</div><div class="metric-caption">Risk 31–70</div>
+      </article>
+      <article class="metric" style="--metric-color:var(--red)">
+        <div class="metric-label">Malicious</div><div class="metric-value" id="metric-malicious">—</div><div class="metric-caption">Risk 71–100</div>
+      </article>
+      <article class="metric" style="--metric-color:var(--cyan)">
+        <div class="metric-label">Highest risk</div><div class="metric-value" id="metric-risk">—</div><div class="metric-caption" id="metric-band">Awaiting analysis</div>
+      </article>
+      <article class="metric" style="--metric-color:var(--amber)">
+        <div class="metric-label">Current alerts</div><div class="metric-value" id="metric-alerts">—</div><div class="metric-caption">Suspicious + malicious</div>
+      </article>
+      <article class="metric" style="--metric-color:var(--red)">
+        <div class="metric-label">Malformed / skipped</div><div class="metric-value" id="metric-skipped">—</div><div class="metric-caption">Warnings do not stop replay</div>
+      </article>
+      <article class="metric" style="--metric-color:var(--cyan)">
+        <div class="metric-label">Audited events</div><div class="metric-value" id="metric-total-audited">—</div><div class="metric-caption">Persisted in SQLite</div>
+      </article>
+      <article class="metric" style="--metric-color:var(--amber)">
+        <div class="metric-label">Pending triage</div><div class="metric-value" id="metric-pending">—</div><div class="metric-caption">NEW status</div>
+      </article>
+      <article class="metric" style="--metric-color:var(--red)">
+        <div class="metric-label">Policy status</div><div class="metric-value" id="metric-policy">—</div><div class="metric-caption" id="metric-policy-note">Latest run</div>
+      </article>
+    </section>
+
+    <section class="overview-grid">
+      <article class="panel">
+        <div class="panel-head"><div class="panel-title">Risk trace</div><div class="panel-kicker" id="trace-caption">EVENT ORDER · 0 SCORED</div></div>
+        <div class="chart-area">
+          <svg id="risk-chart" viewBox="0 0 700 170" role="img" aria-label="Risk score trace by event order"></svg>
+        </div>
+      </article>
+      <article class="panel">
+        <div class="panel-head"><div class="panel-title">Risk distribution</div><div class="panel-kicker">0–30 / 31–70 / 71–100</div></div>
+        <div class="dist-wrap">
+          <div class="dist-bar" id="distribution-bar" aria-label="Severity proportions"></div>
+          <div class="dist-legend" id="distribution-legend"></div>
+        </div>
+      </article>
+      <article class="panel">
+        <div class="panel-head"><div class="panel-title">Threat classes</div><div class="panel-kicker">MODEL OUTPUT</div></div>
+        <div class="dist-wrap"><div class="dist-legend" id="class-legend"></div></div>
+      </article>
+    </section>
+
+    <section class="panel" style="margin-bottom:10px">
+      <div class="panel-head"><div class="panel-title">Top sources</div><div class="panel-kicker">BY ASSESSED EVENT VOLUME</div></div>
+      <div style="overflow:auto"><table class="sources-table"><thead><tr><th>SOURCE</th><th>EVENTS</th><th>HIGHEST RISK</th><th>TOP CLASS</th></tr></thead><tbody id="source-rows"><tr><td colspan="4" class="detail-empty">Source summary appears after a scan.</td></tr></tbody></table></div>
+    </section>
+
+    <section class="lower-grid">
+      <article class="panel">
+        <div class="panel-head table-head">
+          <div class="panel-title">Inspected events <span class="panel-kicker" id="event-count">· 0</span></div>
+          <div class="event-toolbar">
+            <input id="search" class="search-input" type="search" placeholder="Filter source / class…" aria-label="Filter events">
+            <select id="severity-filter" class="filter-select" aria-label="Filter severity">
+              <option value="all">All severities</option><option value="Malicious">Malicious</option>
+              <option value="Suspicious">Suspicious</option><option value="Normal">Normal</option>
+            </select>
+          </div>
+        </div>
+        <div class="table-scroll">
+          <table>
+            <thead><tr><th>RISK</th><th>SEVERITY</th><th>CLASS</th><th>SOURCE → DESTINATION</th><th>CONFIDENCE</th><th>ANOMALY</th><th>EVENT TIME</th></tr></thead>
+            <tbody id="event-rows"><tr><td colspan="7" class="detail-empty">No scan results yet. Launch a replay to populate telemetry.</td></tr></tbody>
+          </table>
+        </div>
+      </article>
+      <div style="display:grid;gap:10px;align-content:start">
+        <article class="panel">
+          <div class="panel-head"><div class="panel-title">Evidence inspector</div><div class="panel-kicker" id="detail-id">NO SELECTION</div></div>
+          <div class="detail-content" id="detail-content"><div class="detail-empty">Select an event to inspect its score, direct feature measurements, model confidence and record-linked evidence.</div></div>
+        </article>
+        <article class="panel">
+          <div class="panel-head"><div class="panel-title">Audit trail</div><div class="panel-kicker">LATEST 100 · SQLITE</div></div>
+          <div class="history-list" id="history-list"><div class="history-empty">Loading local alert history…</div></div>
+          <div class="diagnostics" id="diagnostics"></div>
+        </article>
+      </div>
+    </section>
+    <footer class="footer"><span>LOCAL REPLAY · SYNTHETIC FIXTURE · TRIAGE AID, NOT AN ENFORCEMENT CONTROL</span><span class="local-only">● LOOPBACK ONLY</span></footer>
+  </main>
+  <script>
+    "use strict";
+    const $ = (selector) => document.querySelector(selector);
+    const palette = { Normal: "#62d6c7", Suspicious: "#f5ba58", Malicious: "#f27869" };
+    let uploadedText = "";
+    let events = [];
+    let selectedId = null;
+    let activeJob = null;
+    let pollTimer = null;
+    let auditAlerts = [];
+    let selectedAlertId = null;
+
+    function updateClock() {
+      $("#clock").textContent = new Intl.DateTimeFormat("en-GB", {
+        timeZone: "UTC", hour: "2-digit", minute: "2-digit", second: "2-digit", hour12: false
+      }).format(new Date()) + " UTC";
+    }
+    updateClock();
+    setInterval(updateClock, 1000);
+
+    $("#source-choice").addEventListener("change", (event) => {
+      const isUpload = event.target.value === "upload";
+      const isScenario = event.target.value.startsWith("scenario:");
+      $("#file-label").style.opacity = isUpload ? "1" : ".65";
+      const selectedFile = $("#file-input").files && $("#file-input").files[0];
+      const scenarioName = event.target.value.split(":")[1] || "";
+      $("#file-name").textContent = isUpload
+        ? (selectedFile ? `${selectedFile.name} · ${formatBytes(selectedFile.size)}` : (uploadedText ? "Dropped JSONL file" : "Choose a JSONL file"))
+        : isScenario ? `Bundled ${scenarioName} scenario` : "Bundled synthetic replay";
+    });
+    $("#file-input").addEventListener("change", async (event) => {
+      const file = event.target.files[0];
+      if (!file) return;
+      if (file.size > 2 * 1024 * 1024) {
+        showError("File exceeds the 2 MB upload limit.");
+        event.target.value = "";
+        return;
+      }
+      uploadedText = await file.text();
+      $("#source-choice").value = "upload";
+      $("#file-label").style.opacity = "1";
+      $("#file-name").textContent = `${file.name} · ${formatBytes(file.size)}`;
+      clearError();
+    });
+    $("#file-label").addEventListener("dragover", (event) => { event.preventDefault(); $("#file-label").style.borderColor = "var(--lime)"; });
+    $("#file-label").addEventListener("dragleave", () => { $("#file-label").style.borderColor = "var(--line)"; });
+    $("#file-label").addEventListener("drop", async (event) => {
+      event.preventDefault();
+      $("#file-label").style.borderColor = "var(--line)";
+      const file = event.dataTransfer.files[0];
+      if (!file) return;
+      if (file.size > 2 * 1024 * 1024) return showError("File exceeds the 2 MB upload limit.");
+      uploadedText = await file.text();
+      $("#file-input").value = "";
+      $("#source-choice").value = "upload";
+      $("#file-name").textContent = `${file.name} · ${formatBytes(file.size)}`;
+      clearError();
+    });
+    $("#scan-button").addEventListener("click", startScan);
+    $("#search").addEventListener("input", renderTable);
+    $("#severity-filter").addEventListener("change", renderTable);
+    $("#history-list").addEventListener("click", (event) => {
+      const row = event.target.closest("[data-alert-id]");
+      if (row) loadAlertDetail(row.dataset.alertId);
+    });
+    $("#detail-content").addEventListener("change", async (event) => {
+      if (event.target.id === "alert-status") await saveAlertStatus();
+    });
+    $("#detail-content").addEventListener("click", async (event) => {
+      if (event.target.id === "save-alert-status") await saveAlertStatus();
+    });
+
+    function formatBytes(bytes) {
+      return bytes < 1024 ? `${bytes} B` : `${(bytes / 1024).toFixed(1)} KB`;
+    }
+    function showError(message) { $("#error-box").textContent = message; $("#error-box").classList.add("show"); }
+    function clearError() { $("#error-box").textContent = ""; $("#error-box").classList.remove("show"); }
+    function setProgress(value) { $("#meter-fill").style.width = `${Math.max(0, Math.min(100, value))}%`; }
+    function severityClass(band) { return (band || "Normal").toLowerCase(); }
+    function setBusy(busy) {
+      const button = $("#scan-button");
+      button.disabled = busy;
+      button.classList.toggle("busy", busy);
+      button.textContent = busy ? "◌  Scanning…" : "▶  Scan telemetry";
+      $("#system-state").textContent = busy ? "ANALYZING" : "READY";
+    }
+
+    async function startScan() {
+      clearError();
+      const source = $("#source-choice").value;
+      if (source === "upload" && !uploadedText) return showError("Choose a JSONL file before starting an upload scan.");
+      const maxRiskValue = $("#max-risk").value.trim();
+      if (maxRiskValue && (!Number.isInteger(Number(maxRiskValue)) || Number(maxRiskValue) < 0 || Number(maxRiskValue) > 100)) {
+        return showError("Maximum risk must be an integer from 0 to 100.");
+      }
+      setBusy(true);
+      events = [];
+      selectedId = null;
+      activeJob = null;
+      resetMetrics();
+      renderAll();
+      $("#status-title").textContent = "Starting scan";
+      $("#status-detail").textContent = "Launching the local Python scanner…";
+      setProgress(3);
+      try {
+        const requestPayload = source === "demo" ? { source } :
+          source.startsWith("scenario:") ? { source: "scenario", scenario: source.split(":")[1] } :
+          { source, data: uploadedText };
+        if (maxRiskValue) requestPayload.max_risk = Number(maxRiskValue);
+        requestPayload.drop_noise = $("#drop-noise").checked;
+        const response = await fetch("/api/scan", {
+          method: "POST", headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(requestPayload)
+        });
+        const result = await response.json();
+        if (!response.ok) throw new Error(result.error || `Scan request failed (${response.status}).`);
+        activeJob = result.job_id;
+        let offset = 0;
+        pollTimer = setInterval(async () => {
+          try {
+            const statusResponse = await fetch(`/api/scan/${activeJob}?offset=${offset}`);
+            const status = await statusResponse.json();
+            if (!statusResponse.ok) throw new Error(status.error || "Could not read scan status.");
+            if (status.events.length) {
+              events.push(...status.events);
+              offset += status.events.length;
+              renderAll();
+            }
+            const fraction = status.total_records ? status.processed / status.total_records : 0;
+            setProgress(status.status === "running" ? 8 + fraction * 82 : 100);
+            $("#status-title").textContent = status.phase;
+            $("#status-detail").textContent = `${status.processed} / ${status.total_records} valid records scored`;
+            $("#metric-assessed").textContent = status.processed.toLocaleString();
+            renderDiagnostics(status.stderr);
+            if (status.status !== "running") {
+              clearInterval(pollTimer);
+              pollTimer = null;
+              setBusy(false);
+              if (status.status === "failed") showError(status.error || "Scanner failed. Review diagnostics for details.");
+              else {
+                $("#status-title").textContent = status.exit_code === 2 ? "Scan complete · policy threshold exceeded" : "Scan complete";
+                $("#status-detail").textContent = `${status.processed} records scored · exit ${status.exit_code}`;
+              }
+              await loadHistory();
+              return;
+            }
+          } catch (error) {
+            clearInterval(pollTimer);
+            pollTimer = null;
+            setBusy(false);
+            showError(error.message);
+          }
+        }, 350);
+      } catch (error) {
+        setBusy(false);
+        setProgress(0);
+        $("#status-title").textContent = "Scan could not start";
+        showError(error.message);
+      }
+    }
+    async function loadAlertDetail(alertId) {
+      try {
+        const response = await fetch(`/api/alerts/${encodeURIComponent(alertId)}`);
+        const detail = await response.json();
+        if (!response.ok) throw new Error(detail.error || "Unable to read alert detail.");
+        selectedAlertId = detail.alert_id;
+        $("#detail-id").textContent = `AUDIT ${detail.alert_id} · ${detail.status}`;
+        $("#detail-content").innerHTML = `
+          <div class="detail-head"><div>
+            <div class="detail-ip">${escapeHtml(detail.source_ip)} → ${escapeHtml(detail.destination_ip)}</div>
+            <div class="detail-sub">${escapeHtml(detail.timestamp)} · ${escapeHtml(detail.predicted_class)} · ${(detail.confidence*100).toFixed(1)}% confidence</div>
+            <div class="detail-sub">${escapeHtml(detail.detector_version)} · anomaly ${(detail.anomaly_score*100).toFixed(1)}%</div>
+          </div><div class="detail-risk" style="color:${palette[detail.band]}">${detail.risk}<small style="font-size:9px;color:var(--muted)">/100</small></div></div>
+          <div class="workflow-row"><label for="alert-status" class="panel-kicker">WORKFLOW</label>
+            <select id="alert-status"><option ${detail.status==="NEW"?"selected":""}>NEW</option><option ${detail.status==="REVIEWED"?"selected":""}>REVIEWED</option><option ${detail.status==="RESOLVED"?"selected":""}>RESOLVED</option></select>
+            <button id="save-alert-status" type="button">Save status</button></div>
+          <div class="detail-section">Evidence</div><ul class="evidence-list">${detail.evidence.map((item) => `<li>${escapeHtml(item.explanation || item.observation)} <span style="color:var(--muted)">· +${Number(item.contribution).toFixed(1)}</span></li>`).join("")}</ul>
+          <details class="audit-json"><summary>RAW EVENT</summary><pre>${escapeHtml(JSON.stringify(detail.raw,null,2))}</pre></details>
+          <details class="audit-json"><summary>FEATURE VECTOR</summary><pre>${escapeHtml(JSON.stringify(detail.features,null,2))}</pre></details>
+          <details class="audit-json"><summary>RAW INPUT RECORD IDS · ${detail.raw_event_ids.length}</summary><pre>${escapeHtml(JSON.stringify(detail.raw_event_ids,null,2))}</pre></details>
+          <details class="audit-json"><summary>MODEL PROBABILITIES & RISK COMPONENTS</summary><pre>${escapeHtml(JSON.stringify({probabilities:detail.probabilities,risk_components:detail.risk_components},null,2))}</pre></details>
+          <details class="audit-json"><summary>RELATED SOURCE RECORDS · ${detail.related_records.length}</summary><pre>${escapeHtml(JSON.stringify(detail.related_records,null,2))}</pre></details>`;
+      } catch (error) { showError(error.message); }
+    }
+    async function saveAlertStatus() {
+      if (!selectedAlertId) return;
+      const status = $("#alert-status").value;
+      try {
+        const response = await fetch(`/api/alerts/${selectedAlertId}/status`, {
+          method: "POST", headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ status })
+        });
+        const result = await response.json();
+        if (!response.ok) throw new Error(result.error || "Status update failed.");
+        await loadHistory();
+        await loadAlertDetail(selectedAlertId);
+      } catch (error) { showError(error.message); }
+    }
+
+    function resetMetrics() {
+      $("#metric-assessed").textContent = "0";
+      $("#metric-normal").textContent = "0";
+      $("#metric-suspicious").textContent = "0";
+      $("#metric-malicious").textContent = "0";
+      $("#metric-risk").textContent = "—";
+      $("#metric-band").textContent = "Awaiting analysis";
+      $("#metric-alerts").textContent = "0";
+      $("#metric-skipped").textContent = "—";
+      $("#diagnostics").classList.remove("show");
+    }
+    function renderDiagnostics(lines) {
+      const warnings = (lines || []).filter((line) => line.includes("warning:") || line.includes("error:"));
+      const summary = (lines || []).find((line) => line.startsWith("summary: "));
+      if (summary) {
+        const rejected = summary.match(/rejected=(\d+)/);
+        if (rejected) $("#metric-skipped").textContent = rejected[1];
+      }
+      if (warnings.length) {
+        $("#diagnostics").textContent = warnings.join("\n");
+        $("#diagnostics").classList.add("show");
+        if (!summary) {
+          const rejected = warnings.filter((line) => line.includes("warning: line ")).length;
+          $("#metric-skipped").textContent = String(rejected);
+        }
+      }
+    }
+    function renderAll() {
+      renderMetrics();
+      renderChart();
+      renderDistribution();
+      renderTable();
+      if (selectedId) renderDetail(events.find((event) => event.record_id === selectedId));
+    }
+    function renderMetrics() {
+      $("#event-count").textContent = `· ${events.length}`;
+      const highest = events.reduce((best, event) => Math.max(best, event.risk), 0);
+      const highestEvent = events.find((event) => event.risk === highest);
+      const bands = { Normal: 0, Suspicious: 0, Malicious: 0 };
+      events.forEach((event) => bands[event.band]++);
+      $("#metric-normal").textContent = String(bands.Normal);
+      $("#metric-suspicious").textContent = String(bands.Suspicious);
+      $("#metric-malicious").textContent = String(bands.Malicious);
+      $("#metric-alerts").textContent = String(bands.Suspicious + bands.Malicious);
+      $("#metric-risk").textContent = events.length ? `${highest}/100` : "—";
+      $("#metric-risk").style.color = highestEvent ? palette[highestEvent.band] : "var(--text)";
+      $("#metric-band").textContent = highestEvent ? `${highestEvent.band} · ${highestEvent.predicted_class}` : "Awaiting analysis";
+      $("#trace-caption").textContent = `EVENT ORDER · ${events.length} SCORED`;
+      renderTopSources();
+    }
+    function renderChart() {
+      const svg = $("#risk-chart");
+      const width = 700, height = 170, left = 34, right = 12, top = 12, bottom = 23;
+      const plotW = width - left - right, plotH = height - top - bottom;
+      const y = (risk) => top + plotH - risk / 100 * plotH;
+      const grid = [0, 25, 50, 75, 100].map((risk) =>
+        `<line class="chart-grid" x1="${left}" y1="${y(risk)}" x2="${width-right}" y2="${y(risk)}"/><text class="chart-label" x="2" y="${y(risk)+3}">${risk}</text>`).join("");
+      if (!events.length) {
+        svg.innerHTML = `${grid}<text class="chart-empty" x="${width/2}" y="${height/2}" text-anchor="middle">Awaiting scan telemetry</text>`;
+        return;
+      }
+      const x = (index) => left + (events.length <= 1 ? plotW / 2 : index / (events.length - 1) * plotW);
+      const points = events.map((event, index) => `${x(index)},${y(event.risk)}`).join(" ");
+      const dots = events.map((event, index) => `<circle class="chart-point" cx="${x(index)}" cy="${y(event.risk)}" r="3" fill="${palette[event.band]}"><title>Event ${index+1}: ${event.risk} risk · ${event.band}</title></circle>`).join("");
+      const thresholds = `<line x1="${left}" y1="${y(71)}" x2="${width-right}" y2="${y(71)}" stroke="#f2786966" stroke-dasharray="4 5"/><line x1="${left}" y1="${y(31)}" x2="${width-right}" y2="${y(31)}" stroke="#f5ba5866" stroke-dasharray="4 5"/>`;
+      svg.innerHTML = `${grid}${thresholds}<polyline class="chart-line" points="${points}"/>${dots}<text class="chart-label" x="${left}" y="${height-3}">FIRST EVENT</text><text class="chart-label" x="${width-right}" y="${height-3}" text-anchor="end">LATEST</text>`;
+    }
+    function renderDistribution() {
+      const counts = { Normal: 0, Suspicious: 0, Malicious: 0 };
+      events.forEach((event) => counts[event.band]++);
+      const total = events.length || 1;
+      $("#distribution-bar").innerHTML = Object.entries(counts).map(([band, count]) =>
+        `<div class="dist-segment" style="width:${count/total*100}%;background:${palette[band]}" title="${band}: ${count}"></div>`).join("");
+      $("#distribution-legend").innerHTML = Object.entries(counts).map(([band, count]) =>
+        `<div class="legend-row"><span class="legend-dot" style="--dot-color:${palette[band]}"></span><span>${band}</span><strong>${count} <small style="color:var(--muted);font-size:9px">${events.length ? Math.round(count/events.length*100) : 0}%</small></strong></div>`).join("");
+      const classes = new Map();
+      events.forEach((event) => classes.set(event.predicted_class, (classes.get(event.predicted_class) || 0) + 1));
+      const colors = { Normal: palette.Normal, PortScan: "#8aaed0", BruteForce: palette.Malicious, LateralMovement: "#c196e5", DataExfiltration: "#ef9861", Beaconing: "#95b8ad" };
+      $("#class-legend").innerHTML = [...classes.entries()].sort((a,b) => b[1]-a[1]).map(([name,count]) =>
+        `<div class="legend-row"><span class="legend-dot" style="--dot-color:${colors[name] || "var(--muted)"}"></span><span>${escapeHtml(name)}</span><strong>${count}</strong></div>`).join("") ||
+        `<div class="history-empty">Class distribution appears after a scan.</div>`;
+    }
+    function renderTopSources() {
+      const sources = new Map();
+      events.forEach((event) => {
+        const summary = sources.get(event.source_ip) || { count: 0, risk: 0, classes: new Map() };
+        summary.count++;
+        summary.risk = Math.max(summary.risk, event.risk);
+        summary.classes.set(event.predicted_class, (summary.classes.get(event.predicted_class) || 0) + 1);
+        sources.set(event.source_ip, summary);
+      });
+      const top = [...sources.entries()].sort((a,b) => b[1].count-a[1].count).slice(0, 5);
+      $("#source-rows").innerHTML = top.map(([source, summary]) => {
+        const topClass = [...summary.classes.entries()].sort((a,b) => b[1]-a[1])[0][0];
+        return `<tr><td>${escapeHtml(source)}</td><td>${summary.count}</td><td class="risk-value">${summary.risk}/100</td><td>${escapeHtml(topClass)}</td></tr>`;
+      }).join("") || `<tr><td colspan="4" class="detail-empty">Source summary appears after a scan.</td></tr>`;
+    }
+    function renderTable() {
+      const query = $("#search").value.trim().toLowerCase();
+      const severity = $("#severity-filter").value;
+      const visible = events.filter((event) =>
+        (severity === "all" || event.band === severity) &&
+        (!query || `${event.source_ip} ${event.destination_ip} ${event.predicted_class} ${event.event_type}`.toLowerCase().includes(query)));
+      const body = $("#event-rows");
+      if (!visible.length) {
+        body.innerHTML = `<tr><td colspan="7" class="detail-empty">${events.length ? "No events match these filters." : "No scan results yet. Launch a replay to populate telemetry."}</td></tr>`;
+        return;
+      }
+      body.innerHTML = visible.slice().reverse().map((event) =>
+        `<tr tabindex="0" class="${selectedId === event.record_id ? "selected" : ""}" data-record="${escapeHtml(event.record_id)}">
+          <td class="risk-value" style="color:${palette[event.band]}">${event.risk}</td>
+          <td><span class="band ${severityClass(event.band)}">${escapeHtml(event.band)}</span></td>
+          <td class="class-name">${escapeHtml(event.predicted_class)}</td>
+          <td>${escapeHtml(event.source_ip)} <span style="color:var(--muted)">→</span> ${escapeHtml(event.destination_ip)}</td>
+          <td>${(event.confidence*100).toFixed(1)}%</td>
+          <td>${(event.anomaly_score*100).toFixed(1)}%</td>
+          <td>${escapeHtml(event.timestamp.replace("T", " ").replace("Z", "Z"))}</td>
+        </tr>`).join("");
+      body.querySelectorAll("tr[data-record]").forEach((row) => {
+        row.addEventListener("click", () => selectEvent(row.dataset.record));
+        row.addEventListener("keydown", (event) => { if (event.key === "Enter" || event.key === " ") { event.preventDefault(); selectEvent(row.dataset.record); } });
+      });
+    }
+    function selectEvent(recordId) {
+      selectedId = recordId;
+      renderTable();
+      renderDetail(events.find((event) => event.record_id === recordId));
+    }
+    function renderDetail(event) {
+      if (!event) return;
+      $("#detail-id").textContent = event.record_id.slice(0, 14).toUpperCase();
+      $("#detail-content").innerHTML = `
+        <div class="detail-head">
+          <div><div class="detail-ip">${escapeHtml(event.source_ip)} → ${escapeHtml(event.destination_ip)}</div>
+            <div class="detail-sub">${escapeHtml(event.timestamp)} · ${escapeHtml(event.event_type)} · line ${event.line_number}</div>
+            <div class="detail-sub">${escapeHtml(event.predicted_class)} · ${(event.confidence*100).toFixed(1)}% model confidence · ${(event.anomaly_score*100).toFixed(1)}% anomaly</div>
+            <div class="detail-sub">${escapeHtml(event.detector || "detector")} · ${escapeHtml(event.anomaly_decision || "anomaly score")} · record ${escapeHtml(event.record_id)}</div>
+          </div>
+          <div class="detail-risk" style="color:${palette[event.band]}">${event.risk}<small style="font-size:9px;color:var(--muted)">/100</small></div>
+        </div>
+        <div class="detail-section">Observed evidence · trace ${escapeHtml(event.record_id.slice(0, 12))}</div>
+        <ul class="evidence-list">${event.evidence.map((item) => `<li>${escapeHtml(item.observation)} <span style="color:var(--muted)">· +${Number(item.contribution).toFixed(1)}</span></li>`).join("")}</ul>
+        <div class="feature-grid">
+          ${featureValue(event, "window_event_count", "Window events")}
+          ${featureValue(event, "window_unique_ports", "Unique ports")}
+          ${featureValue(event, "window_unique_destinations", "Destinations")}
+          ${featureValue(event, "window_bytes", "Window bytes")}
+        </div>
+        ${event.risk_components ? `<div class="detail-section">Risk components · auditable points</div><div class="feature-grid">${Object.entries(event.risk_components).map(([key,value]) => `<div class="feature">${escapeHtml(key)}<strong>${Number(value).toFixed(2)}</strong></div>`).join("")}</div>` : ""}
+        ${event.model_probabilities ? `<details class="audit-json"><summary>CLASS PROBABILITIES</summary><pre>${escapeHtml(JSON.stringify(event.model_probabilities,null,2))}</pre></details>` : ""}
+        ${event.raw_event ? `<details class="audit-json"><summary>RAW INPUT RECORD</summary><pre>${escapeHtml(JSON.stringify(event.raw_event,null,2))}</pre></details>` : ""}`;
+    }
+    function featureValue(event, key, label) {
+      const value = event.features && event.features[key] !== undefined ? event.features[key] : "—";
+      return `<div class="feature">${label}<strong>${typeof value === "number" ? value.toLocaleString() : escapeHtml(String(value))}</strong></div>`;
+    }
+    function escapeHtml(value) {
+      return String(value).replace(/[&<>"']/g, (char) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[char]);
+    }
+    async function loadHistory() {
+      try {
+        await loadDashboardSummary();
+        const response = await fetch("/api/history");
+        const data = await response.json();
+        if (!response.ok) throw new Error(data.error || "Unable to read audit history.");
+        const rows = data.alerts || [];
+        auditAlerts = rows;
+        $("#history-list").innerHTML = rows.length ? rows.map((alert) =>
+          `<div class="history-item" data-alert-id="${alert.alert_id}" tabindex="0">
+            <span class="history-score" style="color:${palette[alert.band]}">${alert.risk}</span>
+            <div class="history-main"><strong>${escapeHtml(alert.source_ip)} · ${escapeHtml(alert.predicted_class)}</strong><span>${escapeHtml(alert.timestamp)} · ${escapeHtml(alert.event_type)} · ${escapeHtml(alert.status)}</span></div>
+            <span class="band ${severityClass(alert.band)}">${escapeHtml(alert.band)}</span>
+          </div>`).join("") : `<div class="history-empty">No saved assessments yet. A scan writes its audit trail to local SQLite.</div>`;
+      } catch (error) {
+        $("#history-list").innerHTML = `<div class="history-empty">Audit history unavailable: ${escapeHtml(error.message)}</div>`;
+      }
+    }
+    async function loadDashboardSummary() {
+      const response = await fetch("/api/summary");
+      const summary = await response.json();
+      if (!response.ok) throw new Error(summary.error || "Unable to read dashboard summary.");
+      $("#metric-total-audited").textContent = Number(summary.total_events || 0).toLocaleString();
+      $("#metric-pending").textContent = Number(summary.pending_triage || 0).toLocaleString();
+      $("#metric-policy").textContent = summary.policy_status || "NO SCANS";
+      $("#metric-policy-note").textContent = summary.latest_run
+        ? `Peak ${summary.latest_run.max_risk_score}/100 · ${summary.latest_run.valid_records} valid`
+        : "Latest run";
+    }
+    loadHistory();
+    renderAll();
+  </script>
+</body>
+</html>

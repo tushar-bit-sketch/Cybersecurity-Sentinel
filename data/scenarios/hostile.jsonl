@@ -1,0 +1,4 @@
+{malformed replay row
+{"event_type":"unsupported_fixture_type","source_ip":"192.0.2.7","timestamp":"2026-10-09T00:00:01Z"}
+{"event_type":"network","source_ip":"999.999.0.1","timestamp":"2026-10-09T00:00:02Z"}
+{"action":"allow","bytes":160,"destination_ip":"192.0.2.53","destination_port":5355,"direction":"internal","event_type":"network","label":"Normal","packets":1,"protocol":"llmnr","source_ip":"10.99.0.10","source_port":57546,"timestamp":"2026-10-09T00:00:48Z"}
